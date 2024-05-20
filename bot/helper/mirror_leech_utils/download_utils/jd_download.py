@@ -16,7 +16,7 @@ from bot import (
     jd_lock,
     jd_downloads,
 )
-from bot.helper.ext_utils.bot_utils import new_thread, retry_function
+from bot.helper.ext_utils.bot_utils import new_thread, retry_function, new_task
 from bot.helper.ext_utils.jdownloader_booter import jdownloader
 from bot.helper.ext_utils.task_manager import (
     check_running_tasks,
@@ -36,6 +36,7 @@ from bot.helper.telegram_helper.message_utils import (
 )
 
 
+@new_task
 async def configureDownload(_, query, obj):
     data = query.data.split()
     message = query.message
@@ -120,12 +121,11 @@ async def add_jd_download(listener, path):
         elif odl := await retry_function(
             jdownloader.device.linkgrabber.query_packages, [{}]
         ):
-            odl_list = [
+            if odl_list := [
                 od["uuid"]
                 for od in odl
                 if od.get("saveTo", "").startswith("/root/Downloads/")
-            ]
-            if odl_list:
+            ]:
                 await retry_function(
                     jdownloader.device.linkgrabber.remove_links,
                     package_ids=odl_list,
@@ -268,7 +268,12 @@ async def add_jd_download(listener, path):
 
     msg, button = await stop_duplicate_check(listener)
     if msg:
+        await retry_function(
+            jdownloader.device.linkgrabber.remove_links, package_ids=online_packages
+        )
         await listener.onDownloadError(msg, button)
+        async with jd_lock:
+            del jd_downloads[gid]
         return
 
     if listener.select and await JDownloaderHelper(listener).waitForConfigurations():
