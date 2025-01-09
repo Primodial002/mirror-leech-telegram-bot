@@ -133,7 +133,7 @@ class TelegramUploader:
 
     async def _prepare_file(self, file_, dirpath, delete_file):
         if self._lprefix:
-            cap_mono = f"{self._lprefix} <code>{file_}</code>"
+            cap_mono = f"<b>@AdultFilmsPlus - {file_}</b>"
             self._lprefix = re_sub("<.*?>", "", self._lprefix)
             if (
                 self._listener.seed
@@ -143,10 +143,10 @@ class TelegramUploader:
             ):
                 dirpath = f"{dirpath}/copied_mltb"
                 await makedirs(dirpath, exist_ok=True)
-                new_path = ospath.join(dirpath, f"{self._lprefix} {file_}")
+                new_path = ospath.join(dirpath, f"<b>@AdultFilmsPlus - {file_}</b>")
                 self._up_path = await copy(self._up_path, new_path)
             else:
-                new_path = ospath.join(dirpath, f"{self._lprefix} {file_}")
+                new_path = ospath.join(dirpath, f"<b>@AdultFilmsPlus - {file_}</b>")
                 await rename(self._up_path, new_path)
                 self._up_path = new_path
         else:
